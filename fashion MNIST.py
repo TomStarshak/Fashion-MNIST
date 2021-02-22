@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 18 07:32:14 2021
-
-@author: Tom
-"""
 import keras
 from keras.datasets import fashion_mnist
 from keras.models import Sequential
@@ -72,24 +66,6 @@ def decode_one_hot(y):
     y_classes = [np.argmax(yi, axis=None, out=None) for yi in y]
     return y_classes
 
-'''
-
-Below we're experimenting with the Keras ImageDataGenerator.  From my experience, if these parameters
-are set too aggressively, the loss/accuracy will either never improve or it will take too long to improve.
-Below is an example of a complex data augmentation regime.  This is just for reference.  See my more simple
-one at the bottom.
-
-   
-datagen = ImageDataGenerator(rotation_range=0.5, 
-                                 zoom_range=0.1,
-                                 featurewise_center=True,
-                                 #featurewise_std_normalization=True,
-                                 width_shift_range=0.1, 
-                                 height_shift_range=0.1, 
-                                 shear_range=0.1,
-                                 horizontal_flip=True, 
-                                 fill_mode="nearest")
-'''
 #
 #  Set up our Image Augmentation Data Generator
 #
@@ -99,7 +75,7 @@ datagen = ImageDataGenerator(
             height_shift_range=0.1,
             shear_range=0.3,
             zoom_range=(0.9, 1.1),
-            horizontal_flip=False,
+            horizontal_flip=True,
             vertical_flip=False, 
             fill_mode='constant',
             cval=0)
@@ -113,40 +89,40 @@ lam = 0 #1e-5
 model = Sequential()
 
 model.add(InputLayer(input_shape=input_shape))
+model.add(Conv2D(32, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
+#model.add(BatchNormalization())
 model.add(Conv2D(16, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
-model.add(Conv2D(16, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
 model.add(Conv2D(16, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
 #model.add(Dropout(0.2))
 model.add(MaxPooling2D((2,2)))
 
 
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
 model.add(Conv2D(32, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
-model.add(Conv2D(32, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
+#model.add(Conv2D(32, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
+#model.add(BatchNormalization())
 model.add(Conv2D(32, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
 #model.add(Dropout(0.2))
 model.add(MaxPooling2D((2,2)))
 
 
-model.add(BatchNormalization())
-model.add(Conv2D(64, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
-model.add(Conv2D(64, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
+#model.add(Conv2D(64, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
+#model.add(BatchNormalization())
+#model.add(Conv2D(64, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
+#model.add(BatchNormalization())
 model.add(Conv2D(64, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
 #model.add(Dropout(0.2))
 model.add(MaxPooling2D((2,2)))
 
 
-model.add(BatchNormalization())
-model.add(Conv2D(128, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
-model.add(Conv2D(128, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
+##model.add(Conv2D(128, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
+#model.add(BatchNormalization())
+#model.add(Conv2D(128, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
+#model.add(BatchNormalization())
 model.add(Conv2D(128, kernel_size=(3,3), padding='same', activation='relu', kernel_regularizer=l2(lam)))
 #model.add(Dropout(0.2))
 model.add(MaxPooling2D((2,2)))
@@ -161,24 +137,26 @@ model.add(MaxPooling2D((2,2)))
 
 
 model.add(Flatten())
+model.add(BatchNormalization())
 #model.add(Dense(1024, activation='relu'))   
-model.add(Dropout(0.1))
+model.add(Dropout(0.2))
 model.add(Dense(512, activation='relu'))   
-model.add(Dropout(0.1))
+model.add(Dropout(0.2))
 model.add(Dense(256, activation='relu'))   
-model.add(Dropout(0.1))
+model.add(Dropout(0.2))
 model.add(Dense(128, activation='relu'))   
 # model.add(Dropout(0.2))
 
 
+model.add(Dense(num_classes, activation="softmax"))
 model.add(Dense(num_classes, activation="softmax"))
 
 # Having trouble getting tensorboard callback to work well with EarlyStopping callback...
 
 my_callbacks = [ReduceLROnPlateau(
         monitor='val_loss',
-        factor=0.5,
-        patience=5,
+        factor=0.1,
+        patience=500,
         min_lr=0.00000001),
     EarlyStopping(monitor = 'val_loss', patience=50, min_delta=0.00001, mode='min', restore_best_weights=True),
     ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')]
@@ -192,7 +170,7 @@ augmentation = True
 
 # Compile the model so we can fit it.
 model.compile(loss=keras.losses.categorical_crossentropy, 
-              optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+              optimizer=keras.optimizers.adam(), metrics=['accuracy'])
 
 
 hist = model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
