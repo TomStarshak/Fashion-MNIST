@@ -143,7 +143,7 @@ model.add(Dropout(0.2))
 model.add(Dense(512, activation='relu'))   
 model.add(Dropout(0.2))
 model.add(Dense(256, activation='relu'))   
-model.add(Dropout(0.2))
+#model.add(Dropout(0.2))
 model.add(Dense(128, activation='relu'))   
 # model.add(Dropout(0.2))
 
@@ -158,7 +158,7 @@ my_callbacks = [ReduceLROnPlateau(
         factor=0.1,
         patience=500,
         min_lr=0.00000001),
-    EarlyStopping(monitor = 'val_loss', patience=50, min_delta=0.00001, mode='min', restore_best_weights=True),
+    EarlyStopping(monitor = 'val_loss', patience=100, min_delta=0.00001, mode='min', restore_best_weights=True),
     ModelCheckpoint('.mdl_wts.hdf5', save_best_only=True, monitor='val_loss', mode='min')]
 
 model.summary()
